@@ -9,18 +9,22 @@
 - composer - 参考下面的文档 [6.使用composer](#6使用composer)
 
 ### 项目构建容器包括：
-- php-fpm (支持新增php5.6版本容器)
+- php-fpm (支持php5.6版本)
 - nginx
 - mysql
 - redis
-- crond （支持新增php5.6版本容器）
-- queue （支持新增php5.6版本容器）
+- crond （支持php5.6版本）
+- queue （支持php5.6版本）
 - phpmyadmin
 - phpredisadmin
 
 ### 依赖自定义基础镜像
-- php-fpm 基础镜像：[luzucheng/php7.2.15-fpm-alpine-ext:latest](https://github.com/luzucheng59/docker-library/tree/master/php/7.2/fpm-alpine)
-- php-cli 基础镜像：[luzucheng/php7.2.15-cli-alpine-ext:latest](https://github.com/luzucheng59/docker-library/tree/master/php/7.2/cli-alpine)
+- PHP7
+    - php-fpm 基础镜像：[luzucheng/php7.2.15-fpm-alpine-ext:latest](https://github.com/luzucheng59/docker-library/tree/master/php/7.2/fpm-alpine)
+    - php-cli 基础镜像：[luzucheng/php7.2.15-cli-alpine-ext:latest](https://github.com/luzucheng59/docker-library/tree/master/php/7.2/cli-alpine)
+- PHP5
+    - php-fpm 基础镜像：[luzucheng/php5.6-fpm-alpine-ext:latest](https://github.com/luzucheng59/docker-library/tree/master/php/5.6/fpm-alpine)
+    - php-cli 基础镜像：[luzucheng/php5.6-cli-alpine-ext:latest](https://github.com/luzucheng59/docker-library/tree/master/php/5.6/cli-alpine)
 
 ### 项目特点：
 1. `100%`开源
