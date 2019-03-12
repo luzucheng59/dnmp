@@ -1,0 +1,166 @@
+version: "3"
+services:
+  ### Nginx Web Container #######################################
+  nginx:
+    image: ${NGINX_VERSION}
+    ports:
+      - "${NGINX_HTTP_HOST_PORT}:80"
+      - "${NGINX_HTTPS_HOST_PORT}:443"
+    volumes:
+      - ${SOURCE_DIR}:/var/www/html/:rw
+      - ${NGINX_CONFD_DIR}:/etc/nginx/conf.d/:rw
+      - ${NGINX_CONF_FILE}:/etc/nginx/nginx.conf:ro
+      - ${NGINX_LOG_DIR}:/var/log/nginx/:rw
+    restart: always
+    networks:
+      app_net:
+        ipv4_address: ${NGINX_WEB_SERVER_IP}
+
+  ### PHP-FPM Container #######################################
+  php72:
+    image: ${PHP72_VERSION}
+    volumes:
+      - ${SOURCE_DIR}:/var/www/html/:rw
+      - ${PHP72_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+      - ${PHP72_FPM_CONF_FILE}:/usr/local/etc/php-fpm.d/www.conf:rw
+    restart: always
+    cap_add:
+      - SYS_PTRACE
+    networks:
+      - app_net
+
+#  php56:
+#    image: ${PHP56_VERSION}
+#    volumes:
+#      - ${SOURCE_DIR}:/var/www/html/:rw
+#      - ${PHP56_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+#      - ${PHP56_FPM_CONF_FILE}:/usr/local/etc/php-fpm.d/www.conf:rw
+#    restart: always
+#    cap_add:
+#      - SYS_PTRACE
+#    networks:
+#      - app_net
+
+  ### PHP7.2-CROND Container #######################################
+  php72-crond:
+    build:
+      context: .
+      dockerfile: Dockerfile-php-crond
+      args:
+        PHP_CLI_VERSION: ${PHP72_CLI_VERSION}
+        CROND_CONF_FILE: ${CROND_CONF_FILE}
+    volumes:
+      - ${SOURCE_DIR}:/var/www/html/:rw
+      - ${PHP72_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+      - ${CROND_LOG_DIR}:/var/log/cron:rw
+    networks:
+      - app_net
+
+
+  ### PHP5.6-CROND Container #######################################
+#  php56-crond:
+#      build:
+#        context: .
+#        dockerfile: Dockerfile-php-crond
+#        args:
+#          PHP_CLI_VERSION: ${PHP56_CLI_VERSION}
+#          CROND_CONF_FILE: ${CROND_CONF_FILE}
+#      volumes:
+#        - ${SOURCE_DIR}:/var/www/html/:rw
+#        - ${PHP56_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+#        - ${CROND_LOG_DIR}:/var/log/cron:rw
+#      networks:
+#        - app_net
+
+  ### PHP7.2-SUPERVISOR Container #######################################
+  php72-supervisor:
+    build:
+      context: .
+      dockerfile: Dockerfile-php-supervisor
+      args:
+        PHP_CLI_VERSION: ${PHP72_CLI_VERSION}
+    ports:
+      - "2120:2120"
+      - "2121:2121"
+      - "9001:9001"
+    volumes:
+      - ${SOURCE_DIR}:/var/www/html/:rw
+      - ${PHP72_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+      - ${SUPERVISOR_LOG_DIR}:/var/log/supervisor:rw
+      - ${SUPERVISOR_CONF_FILE}:/etc/supervisor/supervisord.conf:ro
+      - ${SUPERVISOR_CONF_DIR}:/etc/supervisor/conf.d/:rw
+    networks:
+      - app_net
+
+  ### PHP5.6-SUPERVISOR Container #######################################
+#  php56-supervisor:
+#      build:
+#        context: ./php-supervisor
+#        dockerfile: Dockerfile-php-supervisor
+#        args:
+#          PHP_CLI_VERSION: ${PHP56_CLI_VERSION}
+#      volumes:
+#        - ${SOURCE_DIR}:/var/www/html/:rw
+#        - ${PHP56_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+#        - ${SUPERVISOR_LOG_DIR}:/var/log/supervisor:rw
+#        - ${SUPERVISOR_CONF_FILE}:/etc/supervisor/supervisord.conf:ro
+#        - ${SUPERVISOR_CONF_DIR}:/etc/supervisor/conf.d/:rw
+#      networks:
+#        - app_net
+
+  ### Mysql Container #######################################
+  mysql:
+    image: mysql:${MYSQL_VERSION}
+    ports:
+      - "${MYSQL_HOST_PORT}:3306"
+    volumes:
+      - ${MYSQL_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
+      - ${MYSQL_DATA_DIR}:/var/lib/mysql/:rw
+    restart: always
+    networks:
+      - app_net
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+
+  ### REDIS Container #######################################
+  redis:
+    image: redis:${REDIS_VERSION}
+    ports:
+      - "${REDIS_HOST_PORT}:6379"
+    volumes:
+      - ${REDIS_CONF_FILE}:/etc/redis.conf:ro
+    restart: always
+    entrypoint: ["redis-server", "/etc/redis.conf"]
+    networks:
+      - app_net
+    
+  ### Phpmyadmin Container #######################################
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - "${PHPMYADMIN_HOST_PORT}:80"
+    networks:
+      - app_net
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+
+  ### Redisadmin Container #######################################
+  phpredisadmin:
+    image: erikdubbelboer/phpredisadmin:latest
+    ports:
+      - "${REDISMYADMIN_HOST_PORT}:80"
+    networks:
+      - app_net
+    environment:
+      - REDIS_1_HOST=redis
+      - REDIS_1_PORT=6379
+
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_IP}

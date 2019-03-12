@@ -1,0 +1,16 @@
+ARG PHP_CLI_VERSION
+FROM ${PHP_CLI_VERSION}
+
+ARG CROND_CONF_FILE
+COPY ${CROND_CONF_FILE} /var/spool/cron/crontabs/default
+
+RUN cat /var/spool/cron/crontabs/default >> /var/spool/cron/crontabs/root
+
+WORKDIR /var/spool/cron/crontabs
+
+RUN mkdir -p /var/log/cron \
+	&& touch /var/log/cron/cron.log
+
+VOLUME /var/log/cron
+
+CMD ["/usr/sbin/crond", "-f", "-L", "/var/log/cron/cron.log"]
